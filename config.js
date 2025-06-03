@@ -1,22 +1,24 @@
-// Arquivo de configuração para o dashboard
-const config = {
-  // Configuração da API do Google Sheets
+// config.js
+
+// Definindo o objeto global “config” para que o dashboard o leia corretamente
+window.config = {
+  // Como usaremos apenas SheetDB aqui, deixamos todas as chaves de googleSheets vazias:
   googleSheets: {
-    sheetId: '1TOAFgcacj6FbZk_sD5O6engaw1Y6UPyR7m59UCjm8Z4',
-    sheetName: 'Sheet1', // Nome da aba pode precisar ser ajustado
-    apiKey: 'dc2ea3d83e6ff0cf310dca546a7df75aa87a1605' // Será configurado pelo usuário
+    sheetId:   '',
+    sheetName: '',
+    apiKey:    ''
   },
-  
-  // Configuração alternativa usando SheetDB (recomendado)
+
+  // Cole aqui a URL exatamente como o SheetDB forneceu (sem ficar repetindo o sheetId)
   sheetDB: {
-    apiUrl: 'https://sheetdb.io/api/v1/cwfixe9vilf6z' // URL da API SheetDB a ser configurada pelo usuário
+    apiUrl: 'https://sheetdb.io/api/v1/cwfixe9vilf6z'
   },
-  
-  // Configurações de visualização
+
+  // Configurações de formatação e comportamento do dashboard
   display: {
-    dateFormat: 'DD/MM/YYYY',
-    currencyFormat: 'pt-BR',
+    dateFormat:      'DD/MM/YYYY',
+    currencyFormat:  'pt-BR',
     maxPendingItems: 10,
-    refreshInterval: 0 // 0 = apenas manual, ou definir em milissegundos
+    refreshInterval: 0   // 0 = só carregamento manual ao clicar em “Atualizar Dados”
   }
 };

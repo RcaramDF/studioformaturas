@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard Financeiro</title>
+
+  <!-- Bootstrap CSS (v5) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome (ícones) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Estilos customizados -->
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+    }
+    .dashboard-container {
+      max-width: 1400px;
+      margin: 20px auto;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .header h1 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    .header p {
+      color: #7f8c8d;
+      font-size: 1.1em;
+    }
+    .summary-card {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 20px;
+      height: 100%;
+      border-left: 5px solid;
+    }
+    .total-expenses { border-left-color: #3498db; }
+    .pending-payments { border-left-color: #e74c3c; }
+    .top-category    { border-left-color: #2ecc71; }
+    .summary-card h3 {
+      margin-top: 0;
+      color: #34495e;
+      font-size: 1.2em;
+    }
+    .summary-card p {
+      font-size: 1.8em;
+      font-weight: bold;
+      margin: 10px 0 0;
+    }
+    .summary-card .subtitle {
+      font-size: 0.9em;
+      color: #95a5a6;
+      margin: 5px 0 0;
+    }
+    .graph-container {
+      margin-bottom: 30px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 15px;
+      height: 100%;
+    }
+    .btn-update {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      transition: all 0.3s;
+    }
+    .btn-update:hover {
+      background-color: #2980b9;
+      transform: translateY(-2px);
+    }
+    .btn-update:active {
+      transform: translateY(0);
+    }
+    .update-status {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .update-success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .update-error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .loading-spinner {
+      display: none;
+      margin-left: 10px;
+    }
+    .last-update {
+      font-size: 0.8em;
+      color: #7f8c8d;
+      margin-top: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      background-color: rgb(55, 83, 109);
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: lavender;
+    }
+    @media (max-width: 768px) {
+      .summary-card {
+        margin-bottom: 20px;
+      }
+      .graph-container {
+        margin-bottom: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <div class="header">
+      <h1>Dashboard Financeiro</h1>
+      <p>Acompanhamento de despesas, categorias e pagamentos pendentes</p>
+      <div class="d-flex justify-content-center align-items-center">
+        <button id="updateButton" class="btn btn-update">
+          <i class="fas fa-sync-alt me-2"></i>Atualizar Dados
+          <span class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></span>
+        </button>
+        <div class="ms-3 last-update">
+          Última atualização: <span id="lastUpdateTime">Nunca</span>
+        </div>
+      </div>
+      <div id="updateStatus" class="update-status"></div>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-md-4 mb-3 mb-md-0">
+        <div class="summary-card total-expenses">
+          <h3>Total de Despesas</h3>
+          <p id="totalExpenses">R$ 0,00</p>
+          <div class="subtitle">Valor total de todas as despesas</div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-3 mb-md-0">
+        <div class="summary-card pending-payments">
+          <h3>Pagamentos Pendentes</h3>
+          <p id="pendingCount">0</p>
+          <div class="subtitle">Número de pagamentos não realizados</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="summary-card top-category">
+          <h3>Categoria Principal</h3>
+          <p id="topCategory">-</p>
+          <div class="subtitle" id="topCategoryValue">R$ 0,00</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="graph-container">
+          <h3>Despesas Mensais</h3>
+          <div id="monthlyExpensesChart" style="height: 400px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-6 mb-4 mb-lg-0">
+        <div class="graph-container">
+          <h3>Gastos por Categoria</h3>
+          <div id="categoryExpensesChart" style="height: 500px;"></div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="graph-container">
+          <h3>Pagamentos Pendentes</h3>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Descrição</th>
+                  <th>Fornecedor</th>
+                  <th>Vencimento</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="pendingPaymentsTable">
+                <tr>
+                  <td colspan="5" class="text-center">Carregando dados...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts externos -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <!-- Carrega o config.js -->
+  <script src="config.js"></script>
+
+  <!-- Nosso JavaScript principal -->
+  <script>
+    // 1) Obter a URL de consulta a partir do config.js (sheetDB)
+    const SHEETDB_URL = window.config.sheetDB.apiUrl;
+
+    // 2) Funções auxiliares:
+    function cleanCurrency(value) {
+      if (typeof value === 'string') {
+        return parseFloat(
+          value.replace('R$', '').replace('.', '').replace(',', '.').trim() || 0
+        );
+      }
+      return parseFloat(value || 0);
+    }
+    function formatCurrency(value) {
+      return 'R$ ' + value.toFixed(2)
+                         .replace('.', ',')
+                         .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('/');
+      if (parts.length !== 3) return dateStr;
+      const day   = parts[0];
+      const month = parts[1];
+      const year  = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+      return `${day}/${month}/${year}`;
+    }
+
+    // 3) Função principal: busca dados e atualiza o dashboard
+    function updateDashboard() {
+      $('.loading-spinner').show();
+      $('#updateButton').prop('disabled', true);
+      $('#updateStatus').removeClass('update-success update-error').hide();
+
+      // Faz a requisição para a URL do SheetDB
+      $.ajax({
+        url: SHEETDB_URL,
+        type: 'GET',
+        success: function(response) {
+          try {
+            // O SheetDB retorna um array de objetos, cada objeto contendo as colunas nomeadas
+            // Ex.: [{ "Descrição": "Exemplo 1", "Valor Pagamento": "1500", ... }, {...}, ...]
+            const data = processSheetDBData(response);
+            updateSummaryCards(data);
+            updateMonthlyExpensesChart(data);
+            updateCategoryExpensesChart(data);
+            updatePendingPaymentsTable(data);
+
+            const now = new Date();
+            $('#lastUpdateTime').text(now.toLocaleString());
+            $('#updateStatus')
+              .text('Dados atualizados com sucesso!')
+              .addClass('update-success')
+              .show();
+          } catch (error) {
+            console.error('Erro ao processar dados:', error);
+            $('#updateStatus')
+              .text('Erro ao processar dados: ' + error.message)
+              .addClass('update-error')
+              .show();
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error('Erro na requisição:', error);
+          $('#updateStatus')
+            .text('Erro ao buscar dados: ' + error)
+            .addClass('update-error')
+            .show();
+        },
+        complete: function() {
+          $('.loading-spinner').hide();
+          $('#updateButton').prop('disabled', false);
+        }
+      });
+    }
+
+    // 4) Processa o array de objetos retornado pelo SheetDB
+    function processSheetDBData(rows) {
+      if (!Array.isArray(rows) || rows.length === 0) {
+        throw new Error('Dados insuficientes na planilha via SheetDB');
+      }
+
+      // Cada row é um objeto com chaves exatamente iguais aos cabeçalhos da planilha.
+      // Exemplo de row: {
+      //   "Descrição": "Exemplo 1",
+      //   "Valor Pagamento": "1500",
+      //   "Categoria": "002 - Operacional",
+      //   "Fornecedor": "Fornecedor B",
+      //   "Vencimento": "20/06/2025",
+      //   "status do pagamento": "Em Aberto",
+      //   "Mes de Vencimento": "06/2025"
+      // }
+      const mappedRows = rows.map(row => ({
+        descricao:       row['Descrição'] || '',
+        valorPagamento:  cleanCurrency(row['Valor Pagamento']),
+        categoria:       row['Categoria'] || '',
+        fornecedor:      row['Fornecedor'] || '',
+        vencimento:      row['Vencimento'] || '',
+        statusPagamento: row['status do pagamento'] || '',
+        mesVencimento:   row['Mes de Vencimento'] || ''
+      }));
+
+      return {
+        rows:             mappedRows,
+        totalExpenses:    mappedRows.reduce((sum, r) => sum + r.valorPagamento, 0),
+        pendingPayments:  mappedRows.filter(r => r.statusPagamento !== 'Pago'),
+        monthlyExpenses:  calculateMonthlyExpenses(mappedRows),
+        categoryExpenses: calculateCategoryExpenses(mappedRows)
+      };
+    }
+
+    // 5) Calcula despesas mensais (objeto { month, value }[])
+    function calculateMonthlyExpenses(rows) {
+      const monthlyData = {};
+      rows.forEach(row => {
+        if (row.mesVencimento) {
+          if (!monthlyData[row.mesVencimento]) {
+            monthlyData[row.mesVencimento] = 0;
+          }
+          monthlyData[row.mesVencimento] += row.valorPagamento;
+        }
+      });
+      return Object.entries(monthlyData)
+        .map(([month, value]) => ({ month, value }))
+        .sort((a, b) => {
+          const [mA, yA] = a.month.split('/');
+          const [mB, yB] = b.month.split('/');
+          if (yA !== yB) return yA - yB;
+          return mA - mB;
+        });
+    }
+
+    // 6) Calcula despesas por categoria (objeto { category, value }[])
+    function calculateCategoryExpenses(rows) {
+      const categoryData = {};
+      rows.forEach(row => {
+        if (row.categoria) {
+          if (!categoryData[row.categoria]) {
+            categoryData[row.categoria] = 0;
+          }
+          categoryData[row.categoria] += row.valorPagamento;
+        }
+      });
+      return Object.entries(categoryData)
+        .map(([cat, val]) => ({ category: cat, value: val }))
+        .sort((a, b) => b.value - a.value);
+    }
+
+    // 7) Atualiza os cards de resumo
+    function updateSummaryCards(data) {
+      $('#totalExpenses').text(formatCurrency(data.totalExpenses));
+      $('#pendingCount').text(data.pendingPayments.length);
+      if (data.categoryExpenses.length > 0) {
+        const top = data.categoryExpenses[0];
+        $('#topCategory').text(top.category);
+        $('#topCategoryValue').text(formatCurrency(top.value));
+      } else {
+        $('#topCategory').text('-');
+        $('#topCategoryValue').text('R$ 0,00');
+      }
+    }
+
+    // 8) Desenha gráfico de despesas mensais (Plotly)
+    function updateMonthlyExpensesChart(data) {
+      const mData = data.monthlyExpenses;
+      const trace = {
+        x: mData.map(i => i.month),
+        y: mData.map(i => i.value),
+        text: mData.map(i => formatCurrency(i.value)),
+        type: 'bar',
+        marker: { color: 'rgb(55, 83, 109)' },
+        textposition: 'auto'
+      };
+      const layout = {
+        margin: { t: 10, b: 80, l: 80, r: 40 },
+        xaxis: { title: 'Mês' },
+        yaxis: { title: 'Valor (R$)' },
+        template: 'plotly_white',
+        responsive: true
+      };
+      Plotly.newPlot('monthlyExpensesChart', [trace], layout, { responsive: true });
+    }
+
+    // 9) Desenha gráfico de gastos por categoria (Plotly)
+    function updateCategoryExpensesChart(data) {
+      const cData = data.categoryExpenses;
+      const trace = {
+        values: cData.map(i => i.value),
+        labels: cData.map(i => i.category),
+        type: 'pie',
+        hole: 0.4,
+        textinfo: 'label+percent',
+        insidetextorientation: 'radial'
+      };
+      const layout = {
+        margin: { t: 10, b: 10, l: 10, r: 10 },
+        showlegend: false,
+        template: 'plotly_white',
+        responsive: true
+      };
+      Plotly.newPlot('categoryExpensesChart', [trace], layout, { responsive: true });
+    }
+
+    // 10) Popula tabela de pagamentos pendentes (máx. 10 linhas)
+    function updatePendingPaymentsTable(data) {
+      const pending = data.pendingPayments.slice(0, window.config.display.maxPendingItems);
+      let html = '';
+      if (pending.length === 0) {
+        html = '<tr><td colspan="5" class="text-center">Nenhum pagamento pendente encontrado</td></tr>';
+      } else {
+        pending.forEach(p => {
+          html += `
+            <tr>
+              <td>${p.descricao || '-'}</td>
+              <td>${p.fornecedor || '-'}</td>
+              <td>${formatDate(p.vencimento) || '-'}</td>
+              <td>${formatCurrency(p.valorPagamento)}</td>
+              <td>${p.statusPagamento || '-'}</td>
+            </tr>
+          `;
+        });
+      }
+      $('#pendingPaymentsTable').html(html);
+    }
+
+    // 11) Inicializa ao carregar a página
+    $(document).ready(function() {
+      $('#updateButton').on('click', updateDashboard);
+      updateDashboard();
+    });
+  </script>
+</body>
+</html>

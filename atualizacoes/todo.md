@@ -1,0 +1,10 @@
+- [X] Entender os requisitos do usuário (Objetivo do dashboard, métricas desejadas)
+- [X] Solicitar URL do Google Sheets
+- [X] Acessar os dados do Google Sheets
+- [X] Analisar a estrutura dos dados
+- [X] Selecionar ferramentas para o dashboard
+- [X] Desenhar o layout do dashboard com 3 blocos (despesas mensais, gastos por categoria, pagamentos pendentes)
+- [X] Implementar o dashboard interativo
+- [X] Testar e validar o dashboard
+- [X] Preparar dashboard para entrega
+- [X] Apresentar o dashboard ao usuário

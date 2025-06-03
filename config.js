@@ -4,7 +4,7 @@ const config = {
   googleSheets: {
     sheetId: '1TOAFgcacj6FbZk_sD5O6engaw1Y6UPyR7m59UCjm8Z4',
     sheetName: 'Sheet1', // Nome da aba pode precisar ser ajustado
-    apiKey: '1TOAFgcacj6FbZk_sD5O6engaw1Y6UPyR7m59UCjm8Z4' // Será configurado pelo usuário
+    apiKey: 'dc2ea3d83e6ff0cf310dca546a7df75aa87a1605' // Será configurado pelo usuário
   },
   
   // Configuração alternativa usando SheetDB (recomendado)

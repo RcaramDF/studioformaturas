@@ -449,10 +449,12 @@
 
       /** BUSCA DADOS DO SHEETDB **/
       function fetchData() {
+        console.log('fetchData: chamando ' + SHEETDB_URL);
         $.ajax({
           url: SHEETDB_URL,
           type: 'GET',
           success: function (response) {
+            console.log('fetchData: JSON recebido', response);
             allRows = response.map((row) => {
               return {
                 descricao: row['Descrição'] || '',
@@ -480,7 +482,9 @@
       /** RENDERIZAÇÃO DOS CARDS SUPERIORES **/
       function renderStats() {
         let sumPaid = 0, sumDue = 0, sumOverdue = 0;
-        allRows.forEach((r) => {
+        const filtered = getFilteredRows();
+        console.log('renderStats: linhas filtradas', filtered);
+        filtered.forEach((r) => {
           const dtNow = moment();
           const dtVenc = parseDate(r.vencimento);
           if (r.status.toLowerCase() === 'pago') {

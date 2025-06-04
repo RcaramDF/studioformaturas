@@ -4,12 +4,12 @@ const config = {
   googleSheets: {
     sheetId: '1TOAFgcacj6FbZk_sD5O6engaw1Y6UPyR7m59UCjm8Z4',
     sheetName: 'Sheet1', // Nome da aba pode precisar ser ajustado
-    apiKey: 'https://sheetdb.io/api/v1/8fgezuudv2776' // Será configurado pelo usuário
+    apiKey: 'AIzaSyDr1HOQkxfzdWRDniFX_M1kQXvRS2xYwhI' // Será configurado pelo usuário
   },
   
   // Configuração usando SheetDB (recomendado)
   sheetDB: {
-    apiUrl: '' // URL da API SheetDB a ser configurada pelo usuário
+    apiUrl: 'https://sheetdb.io/api/v1/8fgezuudv2776' // URL da API SheetDB a ser configurada pelo usuário
   },
   
   // Configurações de visualização

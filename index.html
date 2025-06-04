@@ -109,12 +109,20 @@
 <body>
   <!-- Sidebar -->
   <nav id="sidebar" class="d-flex flex-column">
-    <div class="user-info">
-      <img src="https://i.pravatar.cc/80" alt="Avatar do Usuário" />
-      <h5>Ricardo Itacarambi</h5>
-    </div>
-    <ul class="nav nav-pills flex-column" id="menuTabs" role="tablist">
-      <li class="nav-item">
+    <div class="user-info text-center mb-4">
+      <!-- Avatar agora envolve a tag <a> que aponta para o link desejado -->
+        <a href="https://www.studioformaturas.com.br/" target="_blank" rel="noopener">
+            <img
+              src="https://i.pravatar.cc/80"
+              alt="Studio Formaturas"
+              style="cursor: pointer;"
+            />
+          </a>
+          <!-- Substituímos o nome do usuário -->
+          <h5 class="mt-2">Studio Formaturas</h5>
+        </div>
+        <ul class="nav nav-pills flex-column" id="menuTabs" role="tablist">
+          <li class="nav-item">
         <button
           class="nav-link active"
           id="tab-overview"

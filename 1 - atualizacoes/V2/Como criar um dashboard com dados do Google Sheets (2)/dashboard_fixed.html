@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financeiro</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DateRangePicker CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+        .summary-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            height: 100%;
+            border-left: 5px solid;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .summary-card.active {
+            background-color: #f8f9fa;
+            box-shadow: 0 0 0 2px #3498db inset;
+        }
+        .total-expenses {
+            border-left-color: #3498db;
+        }
+        .pending-payments {
+            border-left-color: #e74c3c;
+        }
+        .top-category {
+            border-left-color: #2ecc71;
+        }
+        .top-service {
+            border-left-color: #9b59b6;
+        }
+        .summary-card h3 {
+            margin-top: 0;
+            color: #34495e;
+            font-size: 1.2em;
+        }
+        .summary-card p {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin: 10px 0 0;
+        }
+        .summary-card .subtitle {
+            font-size: 0.9em;
+            color: #95a5a6;
+            margin: 5px 0 0;
+        }
+        .graph-container {
+            margin-bottom: 30px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+            height: 100%;
+        }
+        .btn-update {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            transition: all 0.3s;
+        }
+        .btn-update:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        .btn-update:active {
+            transform: translateY(0);
+        }
+        .btn-reset-filters {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            transition: all 0.3s;
+        }
+        .btn-reset-filters:hover {
+            background-color: #7f8c8d;
+        }
+        .update-status {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .update-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .update-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .loading-spinner {
+            display: none;
+            margin-left: 10px;
+        }
+        .last-update {
+            font-size: 0.8em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .filter-container {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .filter-badge {
+            background-color: #3498db;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            display: inline-block;
+            font-size: 0.9em;
+        }
+        .filter-badge .close {
+            margin-left: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+        }
+        th {
+            background-color: rgb(55, 83, 109);
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: lavender;
+        }
+        tr.highlighted {
+            background-color: #d4edda;
+        }
+        .clickable {
+            cursor: pointer;
+        }
+        .clickable:hover {
+            background-color: #f1f1f1;
+        }
+        .tab-container {
+            margin-bottom: 20px;
+        }
+        .tab-container .nav-link {
+            color: #7f8c8d;
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 10px 20px;
+        }
+        .tab-container .nav-link.active {
+            color: #3498db;
+            background-color: transparent;
+            border-bottom: 3px solid #3498db;
+        }
+        .daterangepicker-container {
+            position: relative;
+        }
+        .daterangepicker-container .form-control {
+            padding-right: 30px;
+        }
+        .daterangepicker-container .calendar-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+        @media (max-width: 768px) {
+            .summary-card {
+                margin-bottom: 20px;
+            }
+            .graph-container {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container my-4">
+        <div class="header">
+            <h1>Dashboard Financeiro</h1>
+            <p>Acompanhamento de despesas, categorias e pagamentos pendentes</p>
+            <div class="d-flex justify-content-center align-items-center flex-wrap">
+                <button id="updateButton" class="btn btn-update me-2 mb-2">
+                    <i class="fas fa-sync-alt me-2"></i>Atualizar Dados
+                    <span class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></span>
+                </button>
+                <button id="resetFiltersButton" class="btn btn-reset-filters me-2 mb-2" style="display: none;">
+                    <i class="fas fa-filter me-2"></i>Limpar Filtros
+                </button>
+                <div class="ms-md-3 last-update mb-2">
+                    Última atualização: <span id="lastUpdateTime">Nunca</span>
+                </div>
+            </div>
+            <div id="updateStatus" class="update-status"></div>
+        </div>
+        
+        <!-- Filtro de Data -->
+        <div class="filter-container">
+            <div class="row">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <label for="dateRangeFilter" class="form-label">Filtrar por período de pagamento:</label>
+                    <div class="daterangepicker-container">
+                        <input type="text" id="dateRangeFilter" class="form-control" placeholder="Selecione um período" readonly>
+                        <span class="calendar-icon"><i class="fas fa-calendar"></i></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Filtros ativos:</label>
+                    <div id="activeFilters">
+                        <span class="text-muted">Nenhum filtro aplicado</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cards de Resumo -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3 mb-md-0">
+                <div id="totalExpensesCard" class="summary-card total-expenses" data-filter-type="all">
+                    <h3>Total de Despesas</h3>
+                    <p id="totalExpenses">R$ 0,00</p>
+                    <div class="subtitle">Valor total de todas as despesas</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3 mb-md-0">
+                <div id="pendingPaymentsCard" class="summary-card pending-payments" data-filter-type="status" data-filter-value="Em Aberto">
+                    <h3>Pagamentos Pendentes</h3>
+                    <p id="pendingCount">0</p>
+                    <div class="subtitle">Número de pagamentos não realizados</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3 mb-md-0">
+                <div id="topCategoryCard" class="summary-card top-category" data-filter-type="category">
+                    <h3>Categoria Principal</h3>
+                    <p id="topCategory">-</p>
+                    <div class="subtitle" id="topCategoryValue">R$ 0,00</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div id="topServiceCard" class="summary-card top-service" data-filter-type="service">
+                    <h3>Serviço Principal</h3>
+                    <p id="topService">-</p>
+                    <div class="subtitle" id="topServiceValue">R$ 0,00</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabs para Gráficos -->
+        <div class="tab-container">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly-tab-pane" type="button" role="tab" aria-controls="monthly-tab-pane" aria-selected="true">Despesas Mensais</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="category-tab" data-bs-toggle="tab" data-bs-target="#category-tab-pane" type="button" role="tab" aria-controls="category-tab-pane" aria-selected="false">Gastos por Categoria</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="service-tab" data-bs-toggle="tab" data-bs-target="#service-tab-pane" type="button" role="tab" aria-controls="service-tab-pane" aria-selected="false">Análise por Serviço</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade show active" id="monthly-tab-pane" role="tabpanel" aria-labelledby="monthly-tab" tabindex="0">
+                    <div class="graph-container">
+                        <div id="monthlyExpensesChart" style="height: 400px;"></div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="category-tab-pane" role="tabpanel" aria-labelledby="category-tab" tabindex="0">
+                    <div class="graph-container">
+                        <div id="categoryExpensesChart" style="height: 400px;"></div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="service-tab-pane" role="tabpanel" aria-labelledby="service-tab" tabindex="0">
+                    <div class="graph-container">
+                        <div id="serviceAnalysisChart" style="height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabela de Pagamentos -->
+        <div class="row">
+            <div class="col-12">
+                <div class="graph-container">
+                    <h3>Pagamentos</h3>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Descrição</th>
+                                    <th>Fornecedor</th>
+                                    <th>Serviço</th>
+                                    <th>Vencimento</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentsTable">
+                                <tr>
+                                    <td colspan="6" class="text-center">Carregando dados...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <script>
+        // Configuração padrão (caso não tenha o config.js)
+        var config = {
+            sheetDB: {
+                apiUrl: '' // URL da API SheetDB a ser configurada pelo usuário
+            },
+            display: {
+                dateFormat: 'DD/MM/YYYY',
+                currencyFormat: 'pt-BR',
+                maxPendingItems: 10,
+                refreshInterval: 0 // 0 = apenas manual
+            }
+        };
+        
+        // Variáveis globais
+        let allData = {
+            rows: [],
+            totalExpenses: 0,
+            pendingPayments: [],
+            monthlyExpenses: [],
+            categoryExpenses: [],
+            serviceAnalysis: []
+        };
+        
+        let filteredData = {
+            rows: [],
+            totalExpenses: 0,
+            pendingPayments: [],
+            monthlyExpenses: [],
+            categoryExpenses: [],
+            serviceAnalysis: []
+        };
+        
+        let activeFilters = {
+            dateRange: null,
+            category: null,
+            service: null,
+            status: null
+        };
+        
+        // Função para limpar valores monetários
+        function cleanCurrency(value) {
+            if (typeof value === 'string') {
+                return parseFloat(value.replace('R$', '').replace('.', '').replace(',', '.').trim() || 0);
+            }
+            return parseFloat(value || 0);
+        }
+        
+        // Função para formatar valores monetários
+        function formatCurrency(value) {
+            return 'R$ ' + value.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+        
+        // Função para formatar datas
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return dateStr;
+            
+            // Assumindo formato DD/MM/YY ou DD/MM/YYYY
+            const day = parts[0];
+            const month = parts[1];
+            const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+            
+            return `${day}/${month}/${year}`;
+        }
+        
+        // Função para converter string de data para objeto Date
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return null;
+            
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1; // Mês em JS é 0-indexed
+            const year = parts[2].length === 2 ? 2000 + parseInt(parts[2], 10) : parseInt(parts[2], 10);
+            
+            return new Date(year, month, day);
+        }
+        
+        // Função para atualizar o dashboard usando SheetDB
+        function updateDashboardWithSheetDB() {
+            // Mostrar spinner de carregamento
+            $('.loading-spinner').show();
+            $('#updateButton').prop('disabled', true);
+            $('#updateStatus').removeClass('update-success update-error').hide();
+            
+            // Verificar se a URL da API SheetDB está configurada
+            if (!config.sheetDB.apiUrl) {
+                $('#updateStatus')
+                    .text('Erro: URL da API SheetDB não configurada. Por favor, configure o arquivo config.js.')
+                    .addClass('update-error')
+                    .show();
+                $('.loading-spinner').hide();
+                $('#updateButton').prop('disabled', false);
+                return;
+            }
+            
+            // Fazer requisição para a API SheetDB
+            $.ajax({
+                url: config.sheetDB.apiUrl,
+                type: 'GET',
+                success: function(response) {
+                    try {
+                        // Processar dados
+                        allData = processSheetDBData(response);
+                        
+                        // Aplicar filtros existentes ou usar todos os dados
+                        applyFilters();
+                        
+                        // Atualizar timestamp
+                        const now = new Date();
+                        $('#lastUpdateTime').text(now.toLocaleString());
+                        
+                        // Mostrar mensagem de sucesso
+                        $('#updateStatus')
+                            .text('Dados atualizados com sucesso!')
+                            .addClass('update-success')
+                            .show();
+                    } catch (error) {
+                        console.error('Erro ao processar dados:', error);
+                        $('#updateStatus')
+                            .text('Erro ao processar dados: ' + error.message)
+                            .addClass('update-error')
+                            .show();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro na requisição:', error);
+                    $('#updateStatus')
+                        .text('Erro ao buscar dados: ' + error)
+                        .addClass('update-error')
+                        .show();
+                },
+                complete: function() {
+                    // Esconder spinner de carregamento
+                    $('.loading-spinner').hide();
+                    $('#updateButton').prop('disabled', false);
+                }
+            });
+        }
+        
+        // Função para processar dados do SheetDB
+        function processSheetDBData(data) {
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                throw new Error('Dados insuficientes na planilha');
+            }
+            
+            // Processar linhas de dados
+            const rows = data.map(row => {
+                return {
+                    descricao: row['Descrição'] || '',
+                    valorPagamento: cleanCurrency(row['Valor Pagamento']),
+                    categoria: row['Categoria'] || '',
+                    fornecedor: row['Fornecedor'] || '',
+                    servico: row['Serviço'] || 'Não especificado', // Nova coluna para serviços
+                    vencimento: row['Vencimento'] || '',
+                    statusPagamento: row['status do pagamento'] || '',
+                    mesVencimento: row['Mes de Vencimento'] || '',
+                    dataPagamento: row['Data Pagamento'] || '' // Nova coluna para data de pagamento
+                };
+            });
+            
+            return {
+                rows: rows,
+                totalExpenses: rows.reduce((sum, row) => sum + row.valorPagamento, 0),
+                pendingPayments: rows.filter(row => row.statusPagamento !== 'Pago'),
+                monthlyExpenses: calculateMonthlyExpenses(rows),
+                categoryExpenses: calculateCategoryExpenses(rows),
+                serviceAnalysis: calculateServiceAnalysis(rows)
+            };
+        }
+        
+        // Função para calcular despesas mensais
+        function calculateMonthlyExpenses(rows) {
+            const monthlyData = {};
+            
+            rows.forEach(row => {
+                if (row.mesVencimento) {
+                    if (!monthlyData[row.mesVencimento]) {
+                        monthlyData[row.mesVencimento] = 0;
+                    }
+                    monthlyData[row.mesVencimento] += row.valorPagamento;
+                }
+            });
+            
+            // Converter para array e ordenar por mês
+            return Object.entries(monthlyData)
+                .map(([month, value]) => ({ month, value }))
+                .sort((a, b) => {
+                    const [monthA, yearA] = a.month.split('/');
+                    const [monthB, yearB] = b.month.split('/');
+                    
+                    if (yearA !== yearB) return parseInt(yearA) - parseInt(yearB);
+                    return parseInt(monthA) - parseInt(monthB);
+                });
+        }
+        
+        // Função para calcular despesas por categoria
+        function calculateCategoryExpenses(rows) {
+            const categoryData = {};
+            
+            rows.forEach(row => {
+                if (row.categoria) {
+                    if (!categoryData[row.categoria]) {
+                        categoryData[row.categoria] = 0;
+                    }
+                    categoryData[row.categoria] += row.valorPagamento;
+                }
+            });
+            
+            // Converter para array e ordenar por valor
+            return Object.entries(categoryData)
+                .map(([category, value]) => ({ category, value }))
+                .sort((a, b) => b.value - a.value);
+        }
+        
+        // Função para calcular análise por serviço
+        function calculateServiceAnalysis(rows) {
+            const serviceData = {};
+            
+            rows.forEach(row => {
+                if (row.servico) {
+                    if (!serviceData[row.servico]) {
+                        serviceData[row.servico] = 0;
+                    }
+                    serviceData[row.servico] += row.valorPagamento;
+                }
+            });
+            
+            // Converter para array e ordenar por valor
+            return Object.entries(serviceData)
+                .map(([service, value]) => ({ service, value }))
+                .sort((a, b) => b.value - a.value);
+        }
+        
+        // Função para aplicar filtros aos dados
+        function applyFilters() {
+            console.log("Aplicando filtros:", activeFilters);
+            let filtered = [...allData.rows];
+            let filtersActive = false;
+            
+            // Limpar exibição de filtros ativos
+            $('#activeFilters').empty();
+            
+            // Aplicar filtro de data
+            if (activeFilters.dateRange) {
+                filtersActive = true;
+                const [startDate, endDate] = activeFilters.dateRange;
+                
+                filtered = filtered.filter(row => {
+                    // Usar data de pagamento se disponível, senão usar vencimento
+                    const dateToCheck = row.dataPagamento ? row.dataPagamento : row.vencimento;
+                    const paymentDate = parseDate(dateToCheck);
+                    if (!paymentDate) return false;
+                    
+                    return paymentDate >= startDate && paymentDate <= endDate;
+                });
+                
+                // Adicionar badge de filtro
+                const startFormatted = startDate.toLocaleDateString();
+                const endFormatted = endDate.toLocaleDateString();
+                addFilterBadge(`Data: ${startFormatted} - ${endFormatted}`, 'dateRange');
+            }
+            
+            // Aplicar filtro de categoria
+            if (activeFilters.category) {
+                filtersActive = true;
+                filtered = filtered.filter(row => row.categoria === activeFilters.category);
+                
+                // Adicionar badge de filtro
+                addFilterBadge(`Categoria: ${activeFilters.category}`, 'category');
+            }
+            
+            // Aplicar filtro de serviço
+            if (activeFilters.service) {
+                filtersActive = true;
+                filtered = filtered.filter(row => row.servico === activeFilters.service);
+                
+                // Adicionar badge de filtro
+                addFilterBadge(`Serviço: ${activeFilters.service}`, 'service');
+            }
+            
+            // Aplicar filtro de status
+            if (activeFilters.status) {
+                filtersActive = true;
+                filtered = filtered.filter(row => row.statusPagamento === activeFilters.status);
+                
+                // Adicionar badge de filtro
+                addFilterBadge(`Status: ${activeFilters.status}`, 'status');
+            }
+            
+            // Se não houver filtros ativos, mostrar mensagem
+            if (!filtersActive) {
+                $('#activeFilters').html('<span class="text-muted">Nenhum filtro aplicado</span>');
+                $('#resetFiltersButton').hide();
+            } else {
+                $('#resetFiltersButton').show();
+            }
+            
+            // Atualizar dados filtrados
+            filteredData = {
+                rows: filtered,
+                totalExpenses: filtered.reduce((sum, row) => sum + row.valorPagamento, 0),
+                pendingPayments: filtered.filter(row => row.statusPagamento !== 'Pago'),
+                monthlyExpenses: calculateMonthlyExpenses(filtered),
+                categoryExpenses: calculateCategoryExpenses(filtered),
+                serviceAnalysis: calculateServiceAnalysis(filtered)
+            };
+            
+            console.log("Dados filtrados:", filteredData);
+            
+            // Atualizar visualizações
+            updateSummaryCards(filteredData);
+            updateMonthlyExpensesChart(filteredData);
+            updateCategoryExpensesChart(filteredData);
+            updateServiceAnalysisChart(filteredData);
+            updatePaymentsTable(filteredData);
+            
+            // Atualizar classes ativas nos cards
+            updateActiveCards();
+        }
+        
+        // Função para adicionar badge de filtro
+        function addFilterBadge(text, filterType) {
+            const badge = $(`<span class="filter-badge">${text} <span class="close" data-filter-type="${filterType}">&times;</span></span>`);
+            $('#activeFilters').append(badge);
+            
+            // Adicionar evento de clique para remover filtro
+            badge.find('.close').on('click', function() {
+                const type = $(this).data('filter-type');
+                activeFilters[type] = null;
+                applyFilters();
+            });
+        }
+        
+        // Função para atualizar classes ativas nos cards
+        function updateActiveCards() {
+            // Remover classe ativa de todos os cards
+            $('.summary-card').removeClass('active');
+            
+            // Adicionar classe ativa conforme filtros
+            if (activeFilters.category) {
+                $('#topCategoryCard').addClass('active');
+            }
+            
+            if (activeFilters.service) {
+                $('#topServiceCard').addClass('active');
+            }
+            
+            if (activeFilters.status === 'Em Aberto') {
+                $('#pendingPaymentsCard').addClass('active');
+            }
+        }
+        
+        // Função para atualizar os cards de resumo
+        function updateSummaryCards(data) {
+            $('#totalExpenses').text(formatCurrency(data.totalExpenses));
+            $('#pendingCount').text(data.pendingPayments.length);
+            
+            if (data.categoryExpenses.length > 0) {
+                const topCategory = data.categoryExpenses[0];
+                $('#topCategory').text(topCategory.category);
+                $('#topCategoryValue').text(formatCurrency(topCategory.value));
+                
+                // Armazenar categoria para filtro ao clicar
+                $('#topCategoryCard').data('filter-value', topCategory.category);
+            } else {
+                $('#topCategory').text('-');
+                $('#topCategoryValue').text('R$ 0,00');
+            }
+            
+            if (data.serviceAnalysis.length > 0) {
+                const topService = data.serviceAnalysis[0];
+                $('#topService').text(topService.service);
+                $('#topServiceValue').text(formatCurrency(topService.value));
+                
+                // Armazenar serviço para filtro ao clicar
+                $('#topServiceCard').data('filter-value', topService.service);
+            } else {
+                $('#topService').text('-');
+                $('#topServiceValue').text('R$ 0,00');
+            }
+        }
+        
+        // Função para atualizar o gráfico de despesas mensais
+        function updateMonthlyExpensesChart(data) {
+            const monthlyData = data.monthlyExpenses;
+            
+            const trace = {
+                x: monthlyData.map(item => item.month),
+                y: monthlyData.map(item => item.value),
+                text: monthlyData.map(item => formatCurrency(item.value)),
+                type: 'bar',
+                marker: {
+                    color: 'rgb(55, 83, 109)'
+                },
+                textposition: 'auto',
+                hoverinfo: 'text+x'
+            };
+            
+            const layout = {
+                margin: { t: 10, b: 80, l: 80, r: 40 },
+                xaxis: {
+                    title: 'Mês'
+                },
+                yaxis: {
+                    title: 'Valor (R$)'
+                },
+                template: 'plotly_white',
+                responsive: true
+            };
+            
+            Plotly.newPlot('monthlyExpensesChart', [trace], layout, {
+                responsive: true,
+                displayModeBar: false
+            });
+            
+            // Adicionar evento de clique para filtrar por mês
+            document.getElementById('monthlyExpensesChart').on('plotly_click', function(data) {
+                const month = data.points[0].x;
+                // Implementar filtro por mês se necessário
+                console.log("Clicou no mês:", month);
+            });
+        }
+        
+        // Função para atualizar o gráfico de gastos por categoria
+        function updateCategoryExpensesChart(data) {
+            const categoryData = data.categoryExpenses;
+            
+            const trace = {
+                values: categoryData.map(item => item.value),
+                labels: categoryData.map(item => item.category),
+                type: 'pie',
+                hole: 0.4,
+                textinfo: 'label+percent',
+                insidetextorientation: 'radial',
+                hoverinfo: 'label+value+percent',
+                hovertemplate: '%{label}<br>%{value:,.2f}<br>%{percent}<extra></extra>'
+            };
+            
+            const layout = {
+                margin: { t: 10, b: 10, l: 10, r: 10 },
+                showlegend: true,
+                legend: {
+                    orientation: 'h',
+                    y: -0.2
+                },
+                template: 'plotly_white',
+                responsive: true
+            };
+            
+            Plotly.newPlot('categoryExpensesChart', [trace], layout, {
+                responsive: true,
+                displayModeBar: false
+            });
+            
+            // Adicionar evento de clique para filtrar por categoria
+            document.getElementById('categoryExpensesChart').on('plotly_click', function(data) {
+                const category = data.points[0].label;
+                activeFilters.category = category;
+                applyFilters();
+            });
+        }
+        
+        // Função para atualizar o gráfico de análise por serviço
+        function updateServiceAnalysisChart(data) {
+            const serviceData = data.serviceAnalysis;
+            
+            // Ordenar por valor para melhor visualização
+            serviceData.sort((a, b) => a.value - b.value);
+            
+            const trace = {
+                x: serviceData.map(item => item.value),
+                y: serviceData.map(item => item.service),
+                type: 'bar',
+                orientation: 'h',
+                marker: {
+                    color: 'rgb(142, 68, 173)'
+                },
+                text: serviceData.map(item => formatCurrency(item.value)),
+                textposition: 'auto',
+                hoverinfo: 'text+y'
+            };
+            
+            const layout = {
+                margin: { t: 10, b: 40, l: 200, r: 40 },
+                xaxis: {
+                    title: 'Valor (R$)'
+                },
+                yaxis: {
+                    title: 'Serviço'
+                },
+                template: 'plotly_white',
+                responsive: true
+            };
+            
+            Plotly.newPlot('serviceAnalysisChart', [trace], layout, {
+                responsive: true,
+                displayModeBar: false
+            });
+            
+            // Adicionar evento de clique para filtrar por serviço
+            document.getElementById('serviceAnalysisChart').on('plotly_click', function(data) {
+                const service = data.points[0].y;
+                activeFilters.service = service;
+                applyFilters();
+            });
+        }
+        
+        // Função para atualizar a tabela de pagamentos
+        function updatePaymentsTable(data) {
+            const payments = data.rows;
+            
+            let tableHtml = '';
+            
+            if (payments.length === 0) {
+                tableHtml = '<tr><td colspan="6" class="text-center">Nenhum pagamento encontrado</td></tr>';
+            } else {
+                payments.forEach(payment => {
+                    // Determinar se a linha deve ser destacada com base nos filtros
+                    const isHighlighted = 
+                        (activeFilters.category && payment.categoria === activeFilters.category) ||
+                        (activeFilters.service && payment.servico === activeFilters.service) ||
+                        (activeFilters.status && payment.statusPagamento === activeFilters.status);
+                    
+                    tableHtml += `
+                        <tr class="clickable ${isHighlighted ? 'highlighted' : ''}">
+                            <td>${payment.descricao || '-'}</td>
+                            <td>${payment.fornecedor || '-'}</td>
+                            <td>${payment.servico || '-'}</td>
+                            <td>${formatDate(payment.vencimento) || '-'}</td>
+                            <td>${formatCurrency(payment.valorPagamento)}</td>
+                            <td>${payment.statusPagamento || '-'}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            $('#paymentsTable').html(tableHtml);
+            
+            // Adicionar evento de clique nas linhas da tabela
+            $('#paymentsTable tr.clickable').on('click', function() {
+                // Implementar ação ao clicar na linha, se necessário
+                console.log("Clicou na linha da tabela");
+            });
+        }
+        
+        // Função para limpar todos os filtros
+        function resetFilters() {
+            activeFilters = {
+                dateRange: null,
+                category: null,
+                service: null,
+                status: null
+            };
+            
+            // Limpar seleção de data
+            $('#dateRangeFilter').val('');
+            
+            // Aplicar filtros (ou seja, mostrar todos os dados)
+            applyFilters();
+        }
+        
+        // Função para carregar dados de exemplo para demonstração
+        function loadDemoData() {
+            console.log("Carregando dados de demonstração");
+            const demoData = {
+                rows: [
+                    { descricao: 'Aluguel Escritório', valorPagamento: 3500, categoria: '004 - Diretoria', fornecedor: 'Imobiliária XYZ', servico: 'Aluguel', vencimento: '05/06/2025', dataPagamento: '05/06/2025', statusPagamento: 'Pago', mesVencimento: '06/2025' },
+                    { descricao: 'Consultoria Jurídica', valorPagamento: 2500, categoria: '002 - Operacional', fornecedor: 'Advogados Associados', servico: 'Consultoria', vencimento: '10/06/2025', dataPagamento: '10/06/2025', statusPagamento: 'Pago', mesVencimento: '06/2025' },
+                    { descricao: 'Manutenção Equipamentos', valorPagamento: 1200, categoria: '007 - Funcionários', fornecedor: 'TechService', servico: 'Manutenção', vencimento: '15/06/2025', dataPagamento: '', statusPagamento: 'Em Aberto', mesVencimento: '06/2025' },
+                    { descricao: 'Licenças de Software', valorPagamento: 3000, categoria: '004 - Diretoria', fornecedor: 'Microsoft', servico: 'Software', vencimento: '20/06/2025', dataPagamento: '', statusPagamento: 'Em Aberto', mesVencimento: '06/2025' },
+                    { descricao: 'Material de Escritório', valorPagamento: 800, categoria: '001 - Eventos', fornecedor: 'Papelaria Central', servico: 'Material', vencimento: '25/06/2025', dataPagamento: '', statusPagamento: 'Em Aberto', mesVencimento: '06/2025' },
+                    { descricao: 'Serviço de Limpeza', valorPagamento: 1500, categoria: '002 - Operacional', fornecedor: 'Clean Express', servico: 'Limpeza', vencimento: '05/07/2025', dataPagamento: '', statusPagamento: 'Em Aberto', mesVencimento: '07/2025' },
+                    { descricao: 'Internet e Telefonia', valorPagamento: 1200, categoria: '004 - Diretoria', fornecedor: 'Telecom', servico: 'Telecomunicações', vencimento: '10/07/2025', dataPagamento: '', statusPagamento: 'Em Aberto', mesVencimento: '07/2025' },
+                    { descricao: 'Treinamento Equipe', valorPagamento: 2800, categoria: '007 - Funcionários', fornecedor: 'Educorp', servico: 'Treinamento', vencimento: '15/07/2025', dataPagamento: '', statusPagamento: 'Em Aberto', mesVencimento: '07/2025' },
+                    { descricao: 'Seguro Empresarial', valorPagamento: 3500, categoria: '004 - Diretoria', fornecedor: 'Seguradora', servico: 'Seguro', vencimento: '20/07/2025', dataPagamento: '', statusPagamento: 'Em Aberto', mesVencimento: '07/2025' },
+                    { descricao: 'Marketing Digital', valorPagamento: 2000, categoria: '003 - Marketing', fornecedor: 'Agência Digital', servico: 'Marketing', vencimento: '25/07/2025', dataPagamento: '', statusPagamento: 'Em Aberto', mesVencimento: '07/2025' }
+                ]
+            };
+            
+            // Processar dados de demonstração
+            allData = {
+                rows: demoData.rows,
+                totalExpenses: demoData.rows.reduce((sum, row) => sum + row.valorPagamento, 0),
+                pendingPayments: demoData.rows.filter(row => row.statusPagamento !== 'Pago'),
+                monthlyExpenses: calculateMonthlyExpenses(demoData.rows),
+                categoryExpenses: calculateCategoryExpenses(demoData.rows),
+                serviceAnalysis: calculateServiceAnalysis(demoData.rows)
+            };
+            
+            console.log("Dados de demonstração carregados:", allData);
+            
+            // Aplicar filtros (ou seja, mostrar todos os dados)
+            filteredData = { ...allData };
+            
+            // Atualizar visualizações
+            updateSummaryCards(filteredData);
+            updateMonthlyExpensesChart(filteredData);
+            updateCategoryExpensesChart(filteredData);
+            updateServiceAnalysisChart(filteredData);
+            updatePaymentsTable(filteredData);
+            
+            // Atualizar mensagem de status
+            $('#updateStatus')
+                .text('Dados de demonstração carregados. Clique em "Atualizar Dados" para buscar dados reais.')
+                .addClass('update-success')
+                .show();
+                
+            // Atualizar timestamp
+            const now = new Date();
+            $('#lastUpdateTime').text(now.toLocaleString());
+        }
+        
+        // Inicializar dashboard quando a página carregar
+        $(document).ready(function() {
+            console.log("Inicializando dashboard");
+            
+            // Inicializar DateRangePicker
+            $('#dateRangeFilter').daterangepicker({
+                autoUpdateInput: false,
+                locale: {
+                    cancelLabel: 'Limpar',
+                    applyLabel: 'Aplicar',
+                    fromLabel: 'De',
+                    toLabel: 'Até',
+                    customRangeLabel: 'Período Personalizado',
+                    daysOfWeek: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                    monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+                    firstDay: 1
+                }
+            });
+            
+            // Evento quando o usuário seleciona um intervalo de datas
+            $('#dateRangeFilter').on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+                
+                // Atualizar filtro de data
+                activeFilters.dateRange = [picker.startDate.toDate(), picker.endDate.toDate()];
+                applyFilters();
+            });
+            
+            // Evento quando o usuário limpa o intervalo de datas
+            $('#dateRangeFilter').on('cancel.daterangepicker', function(ev, picker) {
+                $(this).val('');
+                
+                // Limpar filtro de data
+                activeFilters.dateRange = null;
+                applyFilters();
+            });
+            
+            // Configurar evento de clique no botão de atualização
+            $('#updateButton').on('click', function() {
+                updateDashboardWithSheetDB();
+            });
+            
+            // Configurar evento de clique no botão de limpar filtros
+            $('#resetFiltersButton').on('click', function() {
+                resetFilters();
+            });
+            
+            // Configurar eventos de clique nos cards de resumo
+            $('#totalExpensesCard').on('click', function() {
+                resetFilters();
+            });
+            
+            $('#pendingPaymentsCard').on('click', function() {
+                activeFilters.status = 'Em Aberto';
+                applyFilters();
+            });
+            
+            $('#topCategoryCard').on('click', function() {
+                const category = $(this).data('filter-value');
+                if (category) {
+                    activeFilters.category = category;
+                    applyFilters();
+                }
+            });
+            
+            $('#topServiceCard').on('click', function() {
+                const service = $(this).data('filter-value');
+                if (service) {
+                    activeFilters.service = service;
+                    applyFilters();
+                }
+            });
+            
+            // Carregar dados de exemplo para demonstração
+            loadDemoData();
+            
+            console.log("Dashboard inicializado");
+        });
+    </script>
+</body>
+</html>

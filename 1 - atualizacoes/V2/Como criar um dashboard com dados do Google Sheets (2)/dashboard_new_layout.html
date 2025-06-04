@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financeiro</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-blue: #1a3a5f; /* Azul escuro do template */
+            --secondary-orange: #f7a928; /* Laranja/amarelo do template */
+            --light-gray-bg: #e6eaef; /* Fundo cinza claro */
+            --white-bg: #ffffff;
+            --text-dark: #2c3e50;
+            --text-light: #ffffff;
+            --text-muted: #7a8999;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-gray-bg);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-blue);
+            color: var(--text-light);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed; /* Fix sidebar */
+            height: 100%;
+            left: 0;
+            top: 0;
+            transition: width 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar .sidebar-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .sidebar .sidebar-header .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--white-bg);
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            color: var(--primary-blue);
+        }
+        
+        .sidebar.collapsed .sidebar-header .avatar {
+             width: 40px;
+             height: 40px;
+             font-size: 1.2em;
+             margin-bottom: 5px;
+        }
+
+        .sidebar .sidebar-header h5,
+        .sidebar .sidebar-header p {
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .sidebar.collapsed .sidebar-header h5,
+        .sidebar.collapsed .sidebar-header p {
+            display: none;
+        }
+
+        .sidebar .nav-link {
+            color: var(--text-light);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 15px;
+            width: 20px; /* Fixed width for icons */
+            text-align: center;
+        }
+        
+        .sidebar.collapsed .nav-link span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .nav-link i {
+            margin-right: 0;
+        }
+        
+        .sidebar.collapsed .nav-link {
+            justify-content: center;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+            margin-left: 250px; /* Same as sidebar width */
+            transition: margin-left 0.3s ease;
+        }
+        
+        .main-content.collapsed {
+             margin-left: 80px; /* Same as collapsed sidebar width */
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .content-header h2 {
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .content-header .menu-toggle {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--text-dark);
+        }
+
+        .summary-card {
+            background-color: var(--white-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            height: 100%;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .summary-card.highlight {
+            background-color: var(--primary-blue);
+            color: var(--text-light);
+        }
+        
+        .summary-card.highlight h4,
+        .summary-card.highlight .card-value,
+        .summary-card.highlight .card-icon {
+             color: var(--text-light);
+        }
+
+        .summary-card h4 {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .summary-card .card-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .summary-card .card-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .summary-card.highlight .card-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .summary-card .card-icon {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .chart-container {
+            background-color: var(--white-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            height: 400px; /* Default height */
+        }
+        
+        .chart-container.pie-chart {
+             height: 350px;
+        }
+        
+        .list-container {
+             background-color: var(--white-bg);
+             border-radius: 8px;
+             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+             padding: 20px;
+             margin-bottom: 20px;
+             border: 1px solid #eee;
+        }
+        
+        .list-container h5 {
+             margin-bottom: 15px;
+             color: var(--text-dark);
+        }
+        
+        .list-group-item {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             padding: 0.75rem 1rem;
+             font-size: 0.9rem;
+        }
+        
+        .list-group-item .amount {
+             font-weight: 600;
+        }
+        
+        .list-group-item.overdue .date {
+             color: #dc3545; /* Red for overdue */
+        }
+        
+        .list-group-item.due .date {
+             color: #ffc107; /* Yellow for due soon */
+        }
+        
+        .list-group-item.paid .date {
+             color: #198754; /* Green for paid */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+            .sidebar .sidebar-header h5,
+            .sidebar .sidebar-header p {
+                display: none;
+            }
+            .sidebar .nav-link span {
+                display: none;
+            }
+            .sidebar .nav-link i {
+                margin-right: 0;
+            }
+            .sidebar .nav-link {
+                justify-content: center;
+            }
+            .main-content {
+                margin-left: 80px;
+            }
+            .sidebar.collapsed {
+                 width: 80px; /* Keep collapsed width */
+            }
+            .main-content.collapsed {
+                 margin-left: 80px; /* Keep collapsed margin */
+            }
+        }
+        
+        @media (max-width: 768px) {
+             .sidebar {
+                 position: absolute; /* Allow hiding on small screens */
+                 z-index: 1000;
+                 left: -250px; /* Hide by default */
+                 transition: left 0.3s ease;
+             }
+             .sidebar.open {
+                 left: 0;
+             }
+             .sidebar.collapsed {
+                 left: -80px;
+             }
+             .sidebar.collapsed.open {
+                 left: 0;
+                 width: 80px;
+             }
+             .main-content {
+                 margin-left: 0;
+             }
+             .main-content.collapsed {
+                 margin-left: 0;
+             }
+             .content-header .menu-toggle {
+                 display: block; /* Show toggle on small screens */
+             }
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="avatar"><i class="fas fa-user"></i></div>
+            <h5>Nome Usuário</h5>
+            <p>usuario@email.com</p>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Contas a Pagar</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <span>Contas a Receber</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Relatórios</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-cog"></i>
+                    <span>Configurações</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content" id="main-content">
+        <header class="content-header">
+            <h2>Dashboard Financeiro</h2>
+            <button class="menu-toggle" id="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </header>
+
+        <!-- Summary Cards -->
+        <div class="row">
+            <div class="col-lg-3 col-md-6">
+                <div class="summary-card highlight">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4>Valores Pagos</h4>
+                        <i class="fas fa-check-circle card-icon"></i>
+                    </div>
+                    <div class="card-value">R$ 0,00</div>
+                    <div class="card-subtitle">Total pago no período</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="summary-card">
+                     <div class="d-flex justify-content-between align-items-center">
+                        <h4>A Vencer</h4>
+                        <i class="fas fa-calendar-alt card-icon"></i>
+                    </div>
+                    <div class="card-value">R$ 0,00</div>
+                    <div class="card-subtitle">Total a vencer no período</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="summary-card">
+                     <div class="d-flex justify-content-between align-items-center">
+                        <h4>Vencidos</h4>
+                        <i class="fas fa-exclamation-triangle card-icon"></i>
+                    </div>
+                    <div class="card-value">R$ 0,00</div>
+                    <div class="card-subtitle">Total vencido no período</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="summary-card">
+                     <div class="d-flex justify-content-between align-items-center">
+                        <h4>Total Geral</h4>
+                        <i class="fas fa-dollar-sign card-icon"></i>
+                    </div>
+                    <div class="card-value">R$ 0,00</div>
+                    <div class="card-subtitle">Soma de todas as contas</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="chart-container" id="monthlyExpensesChartContainer">
+                    <!-- Gráfico de Colunas Mensal será inserido aqui -->
+                    <h5>Despesas Mensais</h5>
+                    <div id="monthlyExpensesChart"></div> 
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="chart-container pie-chart" id="statusPieChartContainer">
+                    <!-- Gráfico de Pizza (Pago vs Vencido vs A Vencer) será inserido aqui -->
+                    <h5>Status dos Pagamentos</h5>
+                     <div id="statusPieChart"></div> 
+                </div>
+            </div>
+        </div>
+
+        <!-- Lists and Filters Row -->
+        <div class="row">
+             <div class="col-lg-4">
+                 <div class="list-container" id="overdueListContainer">
+                     <h5>Pagamentos Vencidos</h5>
+                     <ul class="list-group list-group-flush" id="overdueList">
+                         <!-- Itens vencidos serão inseridos aqui -->
+                         <li class="list-group-item text-muted">Nenhum item vencido</li>
+                     </ul>
+                 </div>
+             </div>
+             <div class="col-lg-4">
+                 <div class="list-container" id="dueListContainer">
+                     <h5>Pagamentos a Vencer</h5>
+                      <ul class="list-group list-group-flush" id="dueList">
+                         <!-- Itens a vencer serão inseridos aqui -->
+                         <li class="list-group-item text-muted">Nenhum item a vencer</li>
+                     </ul>
+                 </div>
+             </div>
+             <div class="col-lg-4">
+                 <div class="list-container" id="paidListContainer">
+                     <h5>Pagamentos Pagos</h5>
+                      <ul class="list-group list-group-flush" id="paidList">
+                         <!-- Itens pagos serão inseridos aqui -->
+                         <li class="list-group-item text-muted">Nenhum item pago</li>
+                     </ul>
+                 </div>
+             </div>
+        </div>
+        
+         <!-- Filter Area -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="list-container">
+                    <h5>Filtros</h5>
+                    <!-- Filtros de data, categoria, etc. serão inseridos aqui -->
+                    <p class="text-muted">Área de filtros (a implementar)</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        // Basic interactivity for sidebar toggle
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const menuToggle = document.getElementById('menu-toggle');
+
+        // Function to toggle sidebar based on screen size
+        function toggleSidebar() {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('open');
+            } else {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('collapsed');
+            }
+        }
+
+        menuToggle.addEventListener('click', toggleSidebar);
+        
+        // Initial check for screen size
+        if (window.innerWidth <= 992 && window.innerWidth > 768) {
+             sidebar.classList.add('collapsed');
+             mainContent.classList.add('collapsed');
+        }
+        
+        // Placeholder for chart rendering (to be implemented later)
+        function renderCharts() {
+            // Placeholder for Monthly Expenses Chart
+            const monthlyLayout = { title: 'Despesas Mensais (Placeholder)', margin: { t: 30, b: 40, l: 50, r: 20 } };
+            Plotly.newPlot('monthlyExpensesChart', [{ x: ['Jan', 'Fev', 'Mar'], y: [10, 20, 15], type: 'bar' }], monthlyLayout, {responsive: true});
+
+            // Placeholder for Status Pie Chart
+            const pieLayout = { title: 'Status (Placeholder)', margin: { t: 30, b: 40, l: 20, r: 20 }, showlegend: true };
+            Plotly.newPlot('statusPieChart', [{ values: [50, 30, 20], labels: ['Pago', 'Vencido', 'A Vencer'], type: 'pie', hole: .4 }], pieLayout, {responsive: true});
+        }
+
+        $(document).ready(function() {
+            renderCharts(); // Render placeholder charts on load
+            console.log("Novo layout do dashboard carregado.");
+        });
+
+    </script>
+</body>
+</html>

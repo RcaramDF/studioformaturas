@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financeiro</title>
+    <meta name="description" content="Dashboard financeiro interativo para acompanhamento de despesas, pagamentos e análises financeiras">
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DateRangePicker CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-blue: #1a3a5f; /* Azul escuro do template */
+            --secondary-orange: #f7a928; /* Laranja/amarelo do template */
+            --light-gray-bg: #e6eaef; /* Fundo cinza claro */
+            --white-bg: #ffffff;
+            --text-dark: #2c3e50;
+            --text-light: #ffffff;
+            --text-muted: #7a8999;
+            --danger-red: #e74c3c;
+            --warning-yellow: #f39c12;
+            --success-green: #2ecc71;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-gray-bg);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-blue);
+            color: var(--text-light);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed; /* Fix sidebar */
+            height: 100%;
+            left: 0;
+            top: 0;
+            transition: width 0.3s ease, left 0.3s ease;
+            z-index: 1050; /* Ensure sidebar is above content */
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar .sidebar-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .sidebar .sidebar-header .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--white-bg);
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            color: var(--primary-blue);
+        }
+        
+        .sidebar.collapsed .sidebar-header .avatar {
+             width: 40px;
+             height: 40px;
+             font-size: 1.2em;
+             margin-bottom: 5px;
+        }
+
+        .sidebar .sidebar-header h5,
+        .sidebar .sidebar-header p {
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .sidebar.collapsed .sidebar-header h5,
+        .sidebar.collapsed .sidebar-header p {
+            display: none;
+        }
+
+        .sidebar .nav-link {
+            color: var(--text-light);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 15px;
+            width: 20px; /* Fixed width for icons */
+            text-align: center;
+        }
+        
+        .sidebar.collapsed .nav-link span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .nav-link i {
+            margin-right: 0;
+        }
+        
+        .sidebar.collapsed .nav-link {
+            justify-content: center;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+            margin-left: 250px; /* Same as sidebar width */
+            transition: margin-left 0.3s ease;
+        }
+        
+        .main-content.collapsed {
+             margin-left: 80px; /* Same as collapsed sidebar width */
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .content-header h2 {
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .content-header .menu-toggle {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--text-dark);
+        }
+
+        .summary-card {
+            background-color: var(--white-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            height: 100%;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .summary-card.highlight {
+            background-color: var(--primary-blue);
+            color: var(--text-light);
+        }
+        
+        .summary-card.highlight h4,
+        .summary-card.highlight .card-value,
+        .summary-card.highlight .card-icon {
+             color: var(--text-light);
+        }
+        
+        .summary-card.highlight .card-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .summary-card.active {
+            box-shadow: 0 0 0 3px var(--primary-blue);
+        }
+        
+        .summary-card.paid.active {
+             box-shadow: 0 0 0 3px var(--success-green);
+        }
+        .summary-card.due.active {
+             box-shadow: 0 0 0 3px var(--warning-yellow);
+        }
+        .summary-card.overdue.active {
+             box-shadow: 0 0 0 3px var(--danger-red);
+        }
+
+        .summary-card h4 {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .summary-card .card-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .summary-card .card-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .summary-card .card-icon {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .chart-container {
+            background-color: var(--white-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            height: 400px; /* Default height */
+        }
+        
+        .chart-container.pie-chart {
+             height: 400px; /* Adjusted height for pie chart */
+        }
+        
+        .list-container {
+             background-color: var(--white-bg);
+             border-radius: 8px;
+             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+             padding: 20px;
+             margin-bottom: 20px;
+             border: 1px solid #eee;
+             min-height: 250px; /* Minimum height for lists */
+             max-height: 400px;
+             overflow-y: auto;
+        }
+        
+        .list-container h5 {
+             margin-bottom: 15px;
+             color: var(--text-dark);
+             position: sticky;
+             top: -20px; /* Adjust based on padding */
+             background: var(--white-bg);
+             padding-top: 15px;
+             padding-bottom: 10px;
+             z-index: 10;
+        }
+        
+        .list-group-item {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             padding: 0.75rem 1rem;
+             font-size: 0.9rem;
+             border: none;
+             border-bottom: 1px solid #eee;
+             cursor: pointer;
+             transition: background-color 0.2s ease;
+        }
+        
+        .list-group-item:last-child {
+             border-bottom: none;
+        }
+        
+        .list-group-item:hover {
+             background-color: #f8f9fa;
+        }
+        
+        .list-group-item .item-details {
+             flex-grow: 1;
+             margin-right: 10px;
+        }
+        
+        .list-group-item .item-description {
+             font-weight: 600;
+             color: var(--text-dark);
+        }
+        
+        .list-group-item .item-date {
+             font-size: 0.8rem;
+             color: var(--text-muted);
+        }
+        
+        .list-group-item .item-amount {
+             font-weight: 600;
+             white-space: nowrap;
+        }
+        
+        .list-group-item.overdue .item-date {
+             color: var(--danger-red);
+        }
+        
+        .list-group-item.due .item-date {
+             color: var(--warning-yellow);
+        }
+        
+        .list-group-item.paid .item-date {
+             color: var(--success-green);
+        }
+        
+        .filter-area {
+             background-color: var(--white-bg);
+             border-radius: 8px;
+             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+             padding: 20px;
+             margin-bottom: 20px;
+             border: 1px solid #eee;
+        }
+        
+        .filter-badge {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            display: inline-block;
+            font-size: 0.9em;
+        }
+        
+        .filter-badge .close {
+            margin-left: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+            .sidebar .sidebar-header h5,
+            .sidebar .sidebar-header p {
+                display: none;
+            }
+            .sidebar .nav-link span {
+                display: none;
+            }
+            .sidebar .nav-link i {
+                margin-right: 0;
+            }
+            .sidebar .nav-link {
+                justify-content: center;
+            }
+            .main-content {
+                margin-left: 80px;
+            }
+            .sidebar.collapsed {
+                 width: 80px; /* Keep collapsed width */
+            }
+            .main-content.collapsed {
+                 margin-left: 80px; /* Keep collapsed margin */
+            }
+        }
+        
+        @media (max-width: 768px) {
+             .sidebar {
+                 position: fixed; /* Keep fixed for overlay */
+                 left: -250px; /* Hide by default */
+                 transition: left 0.3s ease;
+             }
+             .sidebar.open {
+                 left: 0;
+                 width: 250px;
+             }
+             .sidebar.collapsed {
+                 left: -80px;
+             }
+             .sidebar.collapsed.open {
+                 left: 0;
+                 width: 80px;
+             }
+             .main-content {
+                 margin-left: 0;
+             }
+             .main-content.collapsed {
+                 margin-left: 0;
+             }
+             .content-header .menu-toggle {
+                 display: block; /* Show toggle on small screens */
+             }
+             .overlay {
+                 display: none;
+                 position: fixed;
+                 top: 0;
+                 left: 0;
+                 width: 100%;
+                 height: 100%;
+                 background-color: rgba(0, 0, 0, 0.5);
+                 z-index: 1040; /* Below sidebar */
+             }
+             .overlay.active {
+                 display: block;
+             }
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Overlay for small screens -->
+    <div class="overlay" id="overlay"></div>
+    
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="avatar"><i class="fas fa-user"></i></div>
+            <h5>Nome Usuário</h5>
+            <p>usuario@email.com</p>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-section="pagar">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Contas a Pagar</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-section="receber">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <span>Contas a Receber</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-section="relatorios">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Relatórios</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-section="config">
+                    <i class="fas fa-cog"></i>
+                    <span>Configurações</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content" id="main-content">
+        <header class="content-header">
+            <button class="menu-toggle" id="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h2 id="pageTitle">Dashboard Financeiro</h2>
+            <!-- Add update button or other header elements if needed -->
+        </header>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section">
+            <!-- Filter Area -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="filter-area">
+                        <div class="row align-items-end">
+                            <div class="col-md-4 mb-3">
+                                <label for="dateRangeFilter" class="form-label">Filtrar por período:</label>
+                                <input type="text" id="dateRangeFilter" class="form-control" placeholder="Selecione um período">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Filtros ativos:</label>
+                                <div id="activeFilters">
+                                    <span class="text-muted">Nenhum filtro aplicado</span>
+                                </div>
+                            </div>
+                            <div class="col-md-2 mb-3 text-end">
+                                <button id="resetFiltersButton" class="btn btn-secondary w-100" style="display: none;">
+                                    <i class="fas fa-filter-circle-xmark me-1"></i>Limpar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="row">
+                <div class="col-lg-3 col-md-6">
+                    <div id="paidCard" class="summary-card paid" data-filter-type="status" data-filter-value="Pago">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4>Valores Pagos</h4>
+                            <i class="fas fa-check-circle card-icon"></i>
+                        </div>
+                        <div class="card-value" id="paidValue">R$ 0,00</div>
+                        <div class="card-subtitle">Total pago no período</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div id="dueCard" class="summary-card due" data-filter-type="status" data-filter-value="A Vencer">
+                         <div class="d-flex justify-content-between align-items-center">
+                            <h4>A Vencer</h4>
+                            <i class="fas fa-calendar-alt card-icon"></i>
+                        </div>
+                        <div class="card-value" id="dueValue">R$ 0,00</div>
+                        <div class="card-subtitle">Total a vencer no período</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div id="overdueCard" class="summary-card overdue" data-filter-type="status" data-filter-value="Vencido">
+                         <div class="d-flex justify-content-between align-items-center">
+                            <h4>Vencidos</h4>
+                            <i class="fas fa-exclamation-triangle card-icon"></i>
+                        </div>
+                        <div class="card-value" id="overdueValue">R$ 0,00</div>
+                        <div class="card-subtitle">Total vencido no período</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div id="totalCard" class="summary-card total" data-filter-type="all">
+                         <div class="d-flex justify-content-between align-items-center">
+                            <h4>Total Geral</h4>
+                            <i class="fas fa-dollar-sign card-icon"></i>
+                        </div>
+                        <div class="card-value" id="totalValue">R$ 0,00</div>
+                        <div class="card-subtitle">Soma de todas as contas</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="chart-container" id="monthlyExpensesChartContainer">
+                        <h5>Despesas Mensais</h5>
+                        <div id="monthlyExpensesChart"></div> 
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="chart-container pie-chart" id="statusPieChartContainer">
+                        <h5>Status dos Pagamentos</h5>
+                         <div id="statusPieChart"></div> 
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lists Row -->
+            <div class="row">
+                 <div class="col-lg-4">
+                     <div class="list-container" id="overdueListContainer">
+                         <h5>Pagamentos Vencidos</h5>
+                         <ul class="list-group list-group-flush" id="overdueList">
+                             <li class="list-group-item text-muted">Carregando...</li>
+                         </ul>
+                     </div>
+                 </div>
+                 <div class="col-lg-4">
+                     <div class="list-container" id="dueListContainer">
+                         <h5>Pagamentos a Vencer</h5>
+                          <ul class="list-group list-group-flush" id="dueList">
+                             <li class="list-group-item text-muted">Carregando...</li>
+                         </ul>
+                     </div>
+                 </div>
+                 <div class="col-lg-4">
+                     <div class="list-container" id="paidListContainer">
+                         <h5>Pagamentos Pagos</h5>
+                          <ul class="list-group list-group-flush" id="paidList">
+                             <li class="list-group-item text-muted">Carregando...</li>
+                         </ul>
+                     </div>
+                 </div>
+            </div>
+        </div>
+        
+        <!-- Placeholder for other sections -->
+        <div id="pagar-section" style="display: none;"><h2>Contas a Pagar (Em construção)</h2></div>
+        <div id="receber-section" style="display: none;"><h2>Contas a Receber (Em construção)</h2></div>
+        <div id="relatorios-section" style="display: none;"><h2>Relatórios (Em construção)</h2></div>
+        <div id="config-section" style="display: none;"><h2>Configurações (Em construção)</h2></div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <!-- Load config.js -->
+    <script src="config.js"></script> 
+    <script>
+        // --- Global Variables ---
+        let allData = [];
+        let filteredData = [];
+        let activeFilters = {
+            dateRange: null,
+            status: null,
+            month: null,
+            service: null, // Add other filters as needed
+            category: null
+        };
+        const today = moment().startOf('day');
+
+        // --- Utility Functions ---
+        function cleanCurrency(value) {
+            if (typeof value === 'string') {
+                return parseFloat(value.replace('R$', '').replace(/\./g, '').replace(',', '.').trim() || 0);
+            }
+            return parseFloat(value || 0);
+        }
+
+        function formatCurrency(value) {
+            return 'R$ ' + value.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            return moment(dateStr, ['DD/MM/YYYY', 'DD/MM/YY'], true); // Use moment for robust parsing
+        }
+        
+        function getPaymentStatus(row) {
+             if (row.statusPagamento && row.statusPagamento.toLowerCase() === 'pago') {
+                 return 'Pago';
+             }
+             const dueDate = parseDate(row.vencimento);
+             if (!dueDate || !dueDate.isValid()) {
+                 return 'Status Desconhecido'; // Handle invalid dates
+             }
+             if (dueDate.isBefore(today)) {
+                 return 'Vencido';
+             }
+             return 'A Vencer';
+        }
+
+        // --- Data Fetching and Processing ---
+        function fetchData() {
+            // TODO: Implement actual data fetching from SheetDB or API
+            // Using demo data for now
+            console.log("Using demo data");
+            const demoData = [
+                { Descrição: 'Aluguel Escritório', 'Valor Pagamento': 'R$ 3.500,00', Categoria: '004 - Diretoria', Fornecedor: 'Imobiliária XYZ', Serviço: 'Aluguel', Vencimento: '05/06/2025', 'Data Pagamento': '05/06/2025', 'status do pagamento': 'Pago', 'Mes de Vencimento': '06/2025' },
+                { Descrição: 'Consultoria Jurídica', 'Valor Pagamento': 'R$ 2.500,00', Categoria: '002 - Operacional', Fornecedor: 'Advogados Associados', Serviço: 'Consultoria', Vencimento: '10/06/2025', 'Data Pagamento': '10/06/2025', 'status do pagamento': 'Pago', 'Mes de Vencimento': '06/2025' },
+                { Descrição: 'Manutenção Equipamentos', 'Valor Pagamento': 'R$ 1.200,00', Categoria: '007 - Funcionários', Fornecedor: 'TechService', Serviço: 'Manutenção', Vencimento: '15/05/2025', 'Data Pagamento': '', 'status do pagamento': 'Em Aberto', 'Mes de Vencimento': '05/2025' }, // Vencido
+                { Descrição: 'Licenças de Software', 'Valor Pagamento': 'R$ 3.000,00', Categoria: '004 - Diretoria', Fornecedor: 'Microsoft', Serviço: 'Software', Vencimento: '20/06/2025', 'Data Pagamento': '', 'status do pagamento': 'Em Aberto', 'Mes de Vencimento': '06/2025' }, // A Vencer
+                { Descrição: 'Material de Escritório', 'Valor Pagamento': 'R$ 800,00', Categoria: '001 - Eventos', Fornecedor: 'Papelaria Central', Serviço: 'Material', Vencimento: '25/06/2025', 'Data Pagamento': '', 'status do pagamento': 'Em Aberto', 'Mes de Vencimento': '06/2025' }, // A Vencer
+                { Descrição: 'Serviço de Limpeza', 'Valor Pagamento': 'R$ 1.500,00', Categoria: '002 - Operacional', Fornecedor: 'Clean Express', Serviço: 'Limpeza', Vencimento: '05/07/2025', 'Data Pagamento': '', 'status do pagamento': 'Em Aberto', 'Mes de Vencimento': '07/2025' }, // A Vencer
+                { Descrição: 'Internet e Telefonia', 'Valor Pagamento': 'R$ 1.200,00', Categoria: '004 - Diretoria', Fornecedor: 'Telecom', Serviço: 'Telecomunicações', Vencimento: '10/07/2025', 'Data Pagamento': '', 'status do pagamento': 'Em Aberto', 'Mes de Vencimento': '07/2025' }, // A Vencer
+                { Descrição: 'Treinamento Equipe', 'Valor Pagamento': 'R$ 2.800,00', Categoria: '007 - Funcionários', Fornecedor: 'Educorp', Serviço: 'Treinamento', Vencimento: '15/07/2025', 'Data Pagamento': '', 'status do pagamento': 'Em Aberto', 'Mes de Vencimento': '07/2025' }, // A Vencer
+                { Descrição: 'Seguro Empresarial', 'Valor Pagamento': 'R$ 3.500,00', Categoria: '004 - Diretoria', Fornecedor: 'Seguradora', Serviço: 'Seguro', Vencimento: '20/05/2025', 'Data Pagamento': '', 'status do pagamento': 'Em Aberto', 'Mes de Vencimento': '05/2025' }, // Vencido
+                { Descrição: 'Marketing Digital', 'Valor Pagamento': 'R$ 2.000,00', Categoria: '003 - Marketing', Fornecedor: 'Agência Digital', Serviço: 'Marketing', Vencimento: '25/07/2025', 'Data Pagamento': '', 'status do pagamento': 'Em Aberto', 'Mes de Vencimento': '07/2025' } // A Vencer
+            ];
+            processData(demoData);
+        }
+
+        function processData(data) {
+            allData = data.map(row => {
+                const valorPagamento = cleanCurrency(row['Valor Pagamento']);
+                const vencimentoDate = parseDate(row['Vencimento']);
+                const dataPagamentoDate = parseDate(row['Data Pagamento']);
+                const statusCalculado = getPaymentStatus(row);
+                
+                return {
+                    descricao: row['Descrição'] || '',
+                    valorPagamento: valorPagamento,
+                    categoria: row['Categoria'] || '',
+                    fornecedor: row['Fornecedor'] || '',
+                    servico: row['Serviço'] || 'Não especificado',
+                    vencimento: vencimentoDate ? vencimentoDate.format('DD/MM/YYYY') : '',
+                    vencimentoDate: vencimentoDate, // Keep moment object
+                    statusPagamentoOriginal: row['status do pagamento'] || '',
+                    statusCalculado: statusCalculado,
+                    mesVencimento: row['Mes de Vencimento'] || (vencimentoDate ? vencimentoDate.format('MM/YYYY') : ''),
+                    dataPagamento: dataPagamentoDate ? dataPagamentoDate.format('DD/MM/YYYY') : '',
+                    dataPagamentoDate: dataPagamentoDate // Keep moment object
+                };
+            });
+            console.log("Processed Data:", allData);
+            applyFilters(); // Apply default filters (none)
+        }
+
+        // --- Filtering Logic ---
+        function applyFilters() {
+            console.log("Applying filters:", activeFilters);
+            filteredData = allData.filter(row => {
+                // Date Range Filter (based on Vencimento date)
+                if (activeFilters.dateRange) {
+                    const [startDate, endDate] = activeFilters.dateRange;
+                    if (!row.vencimentoDate || !row.vencimentoDate.isBetween(startDate, endDate, null, '[]')) {
+                        return false;
+                    }
+                }
+                
+                // Status Filter
+                if (activeFilters.status && row.statusCalculado !== activeFilters.status) {
+                    return false;
+                }
+                
+                // Month Filter (from bar chart click)
+                if (activeFilters.month && row.mesVencimento !== activeFilters.month) {
+                    return false;
+                }
+                
+                // Add other filters here (category, service)
+                if (activeFilters.category && row.categoria !== activeFilters.category) {
+                    return false;
+                }
+                if (activeFilters.service && row.servico !== activeFilters.service) {
+                    return false;
+                }
+
+                return true; // Include row if no filters exclude it
+            });
+            console.log("Filtered Data Count:", filteredData.length);
+            updateUI();
+            updateActiveFilterDisplay();
+            updateActiveCardHighlight();
+        }
+        
+        function resetFilters() {
+             activeFilters = {
+                 dateRange: null,
+                 status: null,
+                 month: null,
+                 service: null,
+                 category: null
+             };
+             $('#dateRangeFilter').val(''); // Clear date picker
+             applyFilters();
+        }
+        
+        function updateActiveFilterDisplay() {
+            $('#activeFilters').empty();
+            let filtersActive = false;
+
+            if (activeFilters.dateRange) {
+                filtersActive = true;
+                const startFormatted = activeFilters.dateRange[0].format('DD/MM/YY');
+                const endFormatted = activeFilters.dateRange[1].format('DD/MM/YY');
+                addFilterBadge(`Data: ${startFormatted} - ${endFormatted}`, 'dateRange');
+            }
+            if (activeFilters.status) {
+                filtersActive = true;
+                addFilterBadge(`Status: ${activeFilters.status}`, 'status');
+            }
+            if (activeFilters.month) {
+                filtersActive = true;
+                addFilterBadge(`Mês: ${activeFilters.month}`, 'month');
+            }
+            // Add badges for other filters (category, service)
+            if (activeFilters.category) {
+                filtersActive = true;
+                addFilterBadge(`Categoria: ${activeFilters.category}`, 'category');
+            }
+             if (activeFilters.service) {
+                filtersActive = true;
+                addFilterBadge(`Serviço: ${activeFilters.service}`, 'service');
+            }
+
+            if (!filtersActive) {
+                $('#activeFilters').html('<span class="text-muted">Nenhum filtro aplicado</span>');
+                $('#resetFiltersButton').hide();
+            } else {
+                $('#resetFiltersButton').show();
+            }
+        }
+
+        function addFilterBadge(text, filterType) {
+            const badge = $(`<span class="filter-badge">${text} <span class="close" data-filter-type="${filterType}">&times;</span></span>`);
+            $('#activeFilters').append(badge);
+
+            badge.find('.close').on('click', function() {
+                const type = $(this).data('filter-type');
+                activeFilters[type] = null;
+                if (type === 'dateRange') {
+                    $('#dateRangeFilter').val(''); // Clear picker if date filter removed
+                }
+                applyFilters();
+            });
+        }
+        
+        function updateActiveCardHighlight() {
+             $('.summary-card').removeClass('active');
+             if (activeFilters.status === 'Pago') $('#paidCard').addClass('active');
+             if (activeFilters.status === 'A Vencer') $('#dueCard').addClass('active');
+             if (activeFilters.status === 'Vencido') $('#overdueCard').addClass('active');
+             // Add highlights for other filter types if needed
+        }
+
+        // --- UI Update Functions ---
+        function updateUI() {
+            updateSummaryCards();
+            updateMonthlyExpensesChart();
+            updateStatusPieChart();
+            updatePaymentLists();
+        }
+
+        function updateSummaryCards() {
+            let paidTotal = 0;
+            let dueTotal = 0;
+            let overdueTotal = 0;
+            let total = 0;
+
+            // Calculate totals based on ALL data, regardless of filters, 
+            // but consider date filter for 'period' context if applied
+            const dataToSummarize = activeFilters.dateRange ? filteredData : allData;
+
+            dataToSummarize.forEach(row => {
+                total += row.valorPagamento;
+                switch (row.statusCalculado) {
+                    case 'Pago':
+                        paidTotal += row.valorPagamento;
+                        break;
+                    case 'A Vencer':
+                        dueTotal += row.valorPagamento;
+                        break;
+                    case 'Vencido':
+                        overdueTotal += row.valorPagamento;
+                        break;
+                }
+            });
+
+            $('#paidValue').text(formatCurrency(paidTotal));
+            $('#dueValue').text(formatCurrency(dueTotal));
+            $('#overdueValue').text(formatCurrency(overdueTotal));
+            $('#totalValue').text(formatCurrency(total)); // Show total based on summarized data
+            
+            // Update subtitles based on date filter
+            const periodText = activeFilters.dateRange ? "no período selecionado" : "geral";
+            $('#paidCard .card-subtitle').text(`Total pago ${periodText}`);
+            $('#dueCard .card-subtitle').text(`Total a vencer ${periodText}`);
+            $('#overdueCard .card-subtitle').text(`Total vencido ${periodText}`);
+            $('#totalCard .card-subtitle').text(`Soma de todas as contas ${periodText}`);
+        }
+
+        function updateMonthlyExpensesChart() {
+            const monthlyData = {};
+            filteredData.forEach(row => {
+                if (row.mesVencimento) {
+                    if (!monthlyData[row.mesVencimento]) {
+                        monthlyData[row.mesVencimento] = 0;
+                    }
+                    monthlyData[row.mesVencimento] += row.valorPagamento;
+                }
+            });
+
+            const sortedMonths = Object.entries(monthlyData)
+                .map(([month, value]) => ({ month, value }))
+                .sort((a, b) => {
+                    const momentA = moment(a.month, 'MM/YYYY');
+                    const momentB = moment(b.month, 'MM/YYYY');
+                    return momentA - momentB;
+                });
+
+            const trace = {
+                x: sortedMonths.map(item => item.month),
+                y: sortedMonths.map(item => item.value),
+                text: sortedMonths.map(item => formatCurrency(item.value)),
+                type: 'bar',
+                marker: {
+                    color: '#1a3a5f'
+                },
+                hoverinfo: 'x+text'
+            };
+
+            const layout = {
+                margin: { t: 20, b: 50, l: 60, r: 20 },
+                xaxis: { title: 'Mês Vencimento' },
+                yaxis: { title: 'Valor (R$)' },
+                template: 'plotly_white',
+                hovermode: 'closest'
+            };
+
+            Plotly.react('monthlyExpensesChart', [trace], layout, {responsive: true, displayModeBar: false});
+            
+            // Add click event
+            const monthlyChart = document.getElementById('monthlyExpensesChart');
+            monthlyChart.removeAllListeners('plotly_click'); // Remove previous listeners
+            monthlyChart.on('plotly_click', function(data) {
+                const clickedMonth = data.points[0].x;
+                activeFilters.month = clickedMonth;
+                applyFilters();
+            });
+        }
+
+        function updateStatusPieChart() {
+            let paidValue = 0;
+            let overdueValue = 0;
+            let dueValue = 0;
+
+            filteredData.forEach(row => {
+                switch (row.statusCalculado) {
+                    case 'Pago': paidValue += row.valorPagamento; break;
+                    case 'Vencido': overdueValue += row.valorPagamento; break;
+                    case 'A Vencer': dueValue += row.valorPagamento; break;
+                }
+            });
+
+            const trace = {
+                values: [paidValue, overdueValue, dueValue],
+                labels: ['Pago', 'Vencido', 'A Vencer'],
+                type: 'pie',
+                hole: .4,
+                marker: {
+                    colors: ['#2ecc71', '#e74c3c', '#f39c12']
+                },
+                hoverinfo: 'label+percent',
+                textinfo: 'value',
+                texttemplate: '%{label}<br>%{value:$,.2f}',
+                hovertemplate: '<b>%{label}</b><br>Valor: %{value:$,.2f}<br>%{percent}<extra></extra>'
+            };
+
+            const layout = {
+                margin: { t: 20, b: 20, l: 20, r: 20 },
+                showlegend: true,
+                legend: { x: 0.5, y: -0.1, xanchor: 'center', orientation: 'h' }, // Legend below
+                template: 'plotly_white'
+            };
+
+            Plotly.react('statusPieChart', [trace], layout, {responsive: true, displayModeBar: false});
+            
+            // Add click event
+            const pieChart = document.getElementById('statusPieChart');
+            pieChart.removeAllListeners('plotly_click'); // Remove previous listeners
+            pieChart.on('plotly_click', function(data) {
+                const clickedStatus = data.points[0].label;
+                activeFilters.status = clickedStatus;
+                applyFilters();
+            });
+        }
+
+        function updatePaymentLists() {
+            const overdueList = $('#overdueList');
+            const dueList = $('#dueList');
+            const paidList = $('#paidList');
+
+            overdueList.empty();
+            dueList.empty();
+            paidList.empty();
+
+            let overdueCount = 0, dueCount = 0, paidCount = 0;
+
+            // Sort filtered data by due date for lists
+            const sortedData = [...filteredData].sort((a, b) => {
+                if (!a.vencimentoDate) return 1;
+                if (!b.vencimentoDate) return -1;
+                return a.vencimentoDate - b.vencimentoDate;
+            });
+
+            sortedData.forEach(row => {
+                const listItemHtml = `
+                    <li class="list-group-item ${row.statusCalculado.toLowerCase()}" 
+                        data-category="${row.categoria}" data-service="${row.servico}">
+                        <div class="item-details">
+                            <div class="item-description">${row.descricao}</div>
+                            <div class="item-date">Venc: ${row.vencimento || '-'}</div>
+                        </div>
+                        <span class="item-amount">${formatCurrency(row.valorPagamento)}</span>
+                    </li>
+                `;
+
+                switch (row.statusCalculado) {
+                    case 'Vencido':
+                        overdueList.append(listItemHtml);
+                        overdueCount++;
+                        break;
+                    case 'A Vencer':
+                        dueList.append(listItemHtml);
+                        dueCount++;
+                        break;
+                    case 'Pago':
+                        paidList.append(listItemHtml);
+                        paidCount++;
+                        break;
+                }
+            });
+
+            if (overdueCount === 0) overdueList.html('<li class="list-group-item text-muted">Nenhum item vencido</li>');
+            if (dueCount === 0) dueList.html('<li class="list-group-item text-muted">Nenhum item a vencer</li>');
+            if (paidCount === 0) paidList.html('<li class="list-group-item text-muted">Nenhum item pago</li>');
+            
+            // Add click listeners to list items for filtering (optional)
+            $('.list-group-item').not('.text-muted').on('click', function() {
+                 const category = $(this).data('category');
+                 const service = $(this).data('service');
+                 // Example: Filter by category when clicking a list item
+                 if (category) {
+                     activeFilters.category = category;
+                     applyFilters();
+                 }
+                 console.log("Clicked list item:", category, service);
+            });
+        }
+
+        // --- Event Listeners ---
+        function setupEventListeners() {
+            // Sidebar Toggle
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const menuToggle = document.getElementById('menu-toggle');
+            const overlay = document.getElementById('overlay');
+
+            function toggleSidebar() {
+                const isOpen = sidebar.classList.contains('open');
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.toggle('open');
+                    overlay.classList.toggle('active', sidebar.classList.contains('open'));
+                } else {
+                    sidebar.classList.toggle('collapsed');
+                    mainContent.classList.toggle('collapsed');
+                }
+            }
+            
+            menuToggle.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar); // Close sidebar on overlay click
+
+            // Initial sidebar state based on screen size
+            if (window.innerWidth <= 992 && window.innerWidth > 768) {
+                 if (!sidebar.classList.contains('collapsed')) {
+                     sidebar.classList.add('collapsed');
+                     mainContent.classList.add('collapsed');
+                 }
+            } else if (window.innerWidth <= 768) {
+                 sidebar.classList.remove('collapsed'); // Ensure not collapsed on small screens
+                 mainContent.classList.remove('collapsed');
+            }
+            
+            // Sidebar navigation
+            $('.sidebar .nav-link').on('click', function(e) {
+                e.preventDefault();
+                $('.sidebar .nav-link').removeClass('active');
+                $(this).addClass('active');
+                
+                const section = $(this).data('section');
+                $('#pageTitle').text($(this).find('span').text() || 'Dashboard Financeiro');
+                
+                // Hide all sections, show the target one
+                $('.main-content > div[id$="-section"]').hide();
+                $(`#${section}-section`).show();
+            });
+
+            // Date Range Picker
+            $('#dateRangeFilter').daterangepicker({
+                autoUpdateInput: false,
+                opens: 'left',
+                locale: {
+                    format: 'DD/MM/YYYY',
+                    cancelLabel: 'Limpar',
+                    applyLabel: 'Aplicar',
+                    fromLabel: 'De',
+                    toLabel: 'Até',
+                    customRangeLabel: 'Período Personalizado',
+                    daysOfWeek: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                    monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+                    firstDay: 1
+                },
+                ranges: {
+                   'Hoje': [moment(), moment()],
+                   'Ontem': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                   'Últimos 7 Dias': [moment().subtract(6, 'days'), moment()],
+                   'Últimos 30 Dias': [moment().subtract(29, 'days'), moment()],
+                   'Este Mês': [moment().startOf('month'), moment().endOf('month')],
+                   'Mês Passado': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+                }
+            });
+
+            $('#dateRangeFilter').on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+                activeFilters.dateRange = [picker.startDate.startOf('day'), picker.endDate.endOf('day')];
+                applyFilters();
+            });
+
+            $('#dateRangeFilter').on('cancel.daterangepicker', function(ev, picker) {
+                $(this).val('');
+                activeFilters.dateRange = null;
+                applyFilters();
+            });
+
+            // Reset Filters Button
+            $('#resetFiltersButton').on('click', resetFilters);
+            
+            // Summary Card Clicks
+            $('.summary-card').on('click', function() {
+                 const filterType = $(this).data('filter-type');
+                 const filterValue = $(this).data('filter-value');
+                 
+                 if (filterType === 'all') {
+                     resetFilters();
+                 } else if (filterType === 'status') {
+                     // Toggle filter: if already active, remove it, otherwise set it
+                     if (activeFilters.status === filterValue) {
+                         activeFilters.status = null;
+                     } else {
+                         activeFilters.status = filterValue;
+                     }
+                     applyFilters();
+                 }
+                 // Add logic for other card types if needed
+            });
+        }
+
+        // --- Initialization ---
+        $(document).ready(function() {
+            console.log("Initializing dashboard...");
+            setupEventListeners();
+            fetchData(); // Fetch and process data on load
+            console.log("Dashboard initialized.");
+        });
+
+    </script>
+</body>
+</html>
